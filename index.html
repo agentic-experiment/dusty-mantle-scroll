@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dusty Mantle Scroll</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:#0a0a0a;
+    color:#c4b69c;
+    font-family:'Georgia','Times New Roman',serif;
+    overflow-x:hidden;
+  }
+
+  canvas#dust{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
+
+  .layer{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:4rem 2rem;
+    text-align:center;
+  }
+
+  .layer .glyph{
+    font-size:clamp(3rem,8vw,7rem);
+    opacity:0.15;
+    position:absolute;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    font-family:monospace;
+    white-space:nowrap;
+  }
+
+  .layer h2{
+    font-size:clamp(1.4rem,3vw,2.4rem);
+    font-weight:400;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    margin-bottom:1.5rem;
+    opacity:0;
+    transform:translateY(40px);
+    transition:all 1.2s cubic-bezier(.23,1,.32,1);
+  }
+  .layer h2.visible{opacity:1;transform:translateY(0)}
+
+  .layer p{
+    max-width:540px;
+    line-height:2;
+    font-size:clamp(0.95rem,1.5vw,1.15rem);
+    opacity:0;
+    transform:translateY(30px);
+    transition:all 1.4s cubic-bezier(.23,1,.32,1) .2s;
+  }
+  .layer p.visible{opacity:.8;transform:translateY(0)}
+
+  .divider{
+    width:1px;height:120px;
+    margin:0 auto;
+    opacity:0.2;
+  }
+
+  /* Surface */
+  #surface{background:linear-gradient(180deg,#1a1610 0%,#12100c 100%)}
+  #surface h2{color:#d4c4a0}
+
+  /* Crust */
+  #crust{background:linear-gradient(180deg,#12100c 0%,#1c1410 50%,#0f0d0a 100%)}
+  #crust h2{color:#c9a86c}
+  #crust .divider{background:linear-gradient(180deg,transparent,#6b4c2a,transparent)}
+
+  /* Mantle */
+  #mantle{background:linear-gradient(180deg,#0f0d0a 0%,#1a0c08 30%,#2d1008 60%,#1a0c08 100%)}
+  #mantle h2{color:#e8a04a}
+  #mantle .divider{background:linear-gradient(180deg,transparent,#e8a04a,transparent)}
+
+  /* Outer core */
+  #outer-core{background:linear-gradient(180deg,#1a0c08 0%,#3d1a08 30%,#5c2808 50%,#3d1a08 70%,#1a0c08 100%)}
+  #outer-core h2{color:#ff9944}
+
+  /* Inner core */
+  #inner-core{background:radial-gradient(ellipse at 50% 50%,#4a2006 0%,#2a1004 40%,#0a0a0a 100%)}
+  #inner-core h2{color:#ffd080}
+  #inner-core p{color:#e8c090}
+
+  /* The void below */
+  #void{
+    min-height:60vh;
+    background:#050505;
+    color:#333;
+    font-size:0.8rem;
+    letter-spacing:0.5em;
+    font-family:monospace;
+  }
+
+  .stratum{
+    width:min(70vw,600px);
+    height:2px;
+    margin:2rem auto;
+    opacity:0;
+    transition:opacity 2s;
+    border:none;
+  }
+  .stratum.visible{opacity:0.25}
+  .stratum.s1{background:linear-gradient(90deg,transparent,#8b7355,transparent)}
+  .stratum.s2{background:linear-gradient(90deg,transparent,#a0522d,transparent)}
+  .stratum.s3{background:linear-gradient(90deg,transparent,#cd853f,transparent)}
+  .stratum.s4{background:linear-gradient(90deg,transparent,#ff8c00,transparent)}
+  .stratum.s5{background:linear-gradient(90deg,transparent,#ffd700,transparent)}
+
+  .depth-marker{
+    position:fixed;
+    right:1.5rem;top:50%;
+    transform:translateY(-50%);
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    opacity:0.4;
+  }
+  .depth-marker span{
+    display:block;
+    width:3px;height:20px;
+    background:#444;
+    border-radius:2px;
+    transition:background .4s,height .4s;
+  }
+  .depth-marker span.active{background:#c9a86c;height:30px}
+
+  @media(max-width:600px){
+    .depth-marker{right:.5rem}
+    .depth-marker span{width:2px;height:14px}
+    .depth-marker span.active{height:20px}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="dust"></canvas>
+
+<nav class="depth-marker" id="nav">
+  <span data-target="surface"></span>
+  <span data-target="crust"></span>
+  <span data-target="mantle"></span>
+  <span data-target="outer-core"></span>
+  <span data-target="inner-core"></span>
+</nav>
+
+<section class="layer" id="surface">
+  <div class="glyph">~ ~ ~</div>
+  <h2>The Surface</h2>
+  <p>A thin skin of soil and memory. Everything you have ever known lives here, in this whisper-thin rind of the world. Below it, time forgets your name.</p>
+</section>
+
+<div class="divider"></div>
+
+<section class="layer" id="crust">
+  <div class="glyph">///</div>
+  <h2>The Crust</h2>
+  <p>Thirty kilometers of broken stone, pressed flat by eons. Fossils of creatures that never imagined you. Their bones became limestone; your cities will become the same.</p>
+  <hr class="stratum s1">
+  <hr class="stratum s2">
+</section>
+
+<div class="divider"></div>
+
+<section class="layer" id="mantle">
+  <div class="glyph">~&#8734;~</div>
+  <h2>The Mantle</h2>
+  <p>Rock that flows like honey over millennia. It convects in silence, pushing continents apart so slowly that mountains are just ripples in its patience. You are riding on its back and cannot feel it move.</p>
+  <hr class="stratum s3">
+  <hr class="stratum s4">
+</section>
+
+<div class="divider"></div>
+
+<section class="layer" id="outer-core">
+  <div class="glyph">&#9670; &#9670; &#9670;</div>
+  <h2>The Outer Core</h2>
+  <p>Liquid iron, swirling at two thousand degrees. This is the engine. Its motion generates the magnetic field that shields your sky from the solar wind. Without it, the atmosphere would be stripped bare and you would be writing this on nothing.</p>
+  <hr class="stratum s5">
+</section>
+
+<div class="divider"></div>
+
+<section class="layer" id="inner-core">
+  <div class="glyph">&#9679;</div>
+  <h2>The Inner Core</h2>
+  <p>A solid ball of iron and nickel, hotter than the surface of the sun, yet frozen still by pressure. It grows one millimeter per year. It has been growing since the earth was born. It will outlast everything you build.</p>
+</section>
+
+<div class="divider"></div>
+
+<section class="layer" id="void">
+  <p>you have reached the bottom</p>
+</section>
+
+<script>
+// Dust particles
+const canvas = document.getElementById('dust');
+const ctx = canvas.getContext('2d');
+let particles = [];
+const COUNT = 80;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+for (let i = 0; i < COUNT; i++) {
+  particles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight * 5,
+    r: Math.random() * 1.5 + 0.3,
+    vx: (Math.random() - 0.5) * 0.15,
+    vy: Math.random() * 0.08 + 0.02,
+    opacity: Math.random() * 0.4 + 0.1,
+    phase: Math.random() * Math.PI * 2
+  });
+}
+
+let scrollY = 0;
+window.addEventListener('scroll', () => { scrollY = window.scrollY; });
+
+function drawDust() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const t = Date.now() * 0.001;
+  for (const p of particles) {
+    const screenY = p.y - scrollY * 0.3;
+    if (screenY < -20 || screenY > canvas.height + 20) continue;
+    const wobble = Math.sin(t + p.phase) * 0.5;
+    const x = (p.x + wobble + canvas.width) % canvas.width;
+    ctx.beginPath();
+    ctx.arc(x, screenY, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(196,182,156,${p.opacity * (0.5 + 0.5 * Math.sin(t * 0.5 + p.phase))})`;
+    ctx.fill();
+  }
+  requestAnimationFrame(drawDust);
+}
+drawDust();
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+    }
+  }
+}, { threshold: 0.2 });
+
+document.querySelectorAll('.layer h2, .layer p, .stratum').forEach(el => observer.observe(el));
+
+// Depth nav
+const navSpans = document.querySelectorAll('#nav span');
+const layers = ['surface','crust','mantle','outer-core','inner-core'];
+
+function updateNav() {
+  const sy = window.scrollY + window.innerHeight / 2;
+  let active = 0;
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const el = document.getElementById(layers[i]);
+    if (el && el.offsetTop <= sy) { active = i; break; }
+  }
+  navSpans.forEach((s, i) => s.classList.toggle('active', i === active));
+}
+window.addEventListener('scroll', updateNav);
+updateNav();
+
+navSpans.forEach(s => {
+  s.style.cursor = 'pointer';
+  s.addEventListener('click', () => {
+    const t = document.getElementById(s.dataset.target);
+    if (t) t.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
